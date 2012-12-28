@@ -10,6 +10,9 @@ require("naughty")
 -- Load Debian menu entries
 require("debian.menu")
 
+require("volume")
+
+
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -127,6 +130,8 @@ mywibox = {}
 mypromptbox = {}
 mylayoutbox = {}
 mytaglist = {}
+mytimer = {}
+timer_label = {}
 mytaglist.buttons = awful.util.table.join(
                     awful.button({ }, 1, awful.tag.viewonly),
                     awful.button({ modkey }, 1, awful.client.movetotag),
@@ -166,6 +171,17 @@ mytasklist.buttons = awful.util.table.join(
                                               awful.client.focus.byidx(-1)
                                               if client.focus then client.focus:raise() end
                                           end))
+tb_volume = widget({ type = "textbox", name = "tb_volume", align = "right"})
+tb_volume:buttons(awful.util.table.join(
+     awful.button({ }, 1, function () volume.volume_toggle(tb_volume) end),
+     awful.button({ }, 3, function () awful.util.spawn_with_shell('gnome-control-center sound') end),
+     awful.button({ "Control" }, 1, function () volume.volume_up(tb_volume) end),
+     awful.button({ "Control" }, 3, function () volume.volume_down(tb_volume) end)
+     ))
+
+volume_timer = timer({timeout=60})
+volume_timer:add_signal("timeout", function() tb_volume.text = volume.get_volume_status() end)
+volume_timer:start()
 
 for s = 1, screen.count() do
     -- Create a promptbox for each screen
@@ -186,6 +202,19 @@ for s = 1, screen.count() do
                                               return awful.widget.tasklist.label.currenttags(c, s)
                                           end, mytasklist.buttons)
 
+    -- Create a textbox to test timer
+--    timer_label[s] = widget({type = "textbox"})
+    -- Create a timer widget
+--    mytimer[s] = timer({ timeout = 1 })
+--    mytimer[s]:add_signal("timeout", 
+--      function() 
+--        awful.util.spawn_with_shell("date > /tmp/awesome")
+--        local fh = io.input("/tmp/awesome")
+--        local data = fh:read("*all")
+--        io.close(fh)
+--        timer_label[s].text = '<span color="green">' .. data .. "</span>"
+--      end)
+--    mytimer[s]:start()
     -- Create the wibox
     mywibox[s] = awful.wibox({ position = "top", screen = s })
     -- Add widgets to the wibox - order matters
@@ -197,8 +226,10 @@ for s = 1, screen.count() do
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
+        tb_volume,
         mytextclock,
         s == 1 and mysystray or nil,
+--        timer_label[s],
         mytasklist[s],
         layout = awful.widget.layout.horizontal.rightleft
     }
@@ -291,7 +322,36 @@ clientkeys = awful.util.table.join(
         function (c)
             c.maximized_horizontal = not c.maximized_horizontal
             c.maximized_vertical   = not c.maximized_vertical
-        end)
+        end),
+        ---  modify from:http://awesome.naquadah.org/wiki/Move_Window_to_Workspace_Left/Right 
+    awful.key({ modkey, "Shift"   }, ",",
+      function (c)
+        local curidx = awful.tag.getidx(c:tags()[1])
+        local new_tag = 1
+        if curidx == 1 then
+          new_tag = 6
+        else
+          new_tag = curidx - 1
+        end
+        c:tags({screen[mouse.screen]:tags()[new_tag]})
+        if tags[mouse.screen][new_tag] then
+          awful.tag.viewonly(tags[mouse.screen][new_tag])
+        end
+      end),
+    awful.key({ modkey, "Shift"   }, ".",
+      function (c)
+        local curidx = awful.tag.getidx(c:tags()[1])
+        local new_tag = 1
+        if curidx == 6 then
+          new_tag = 1
+        else
+          new_tag = curidx + 1
+        end
+        c:tags({screen[mouse.screen]:tags()[new_tag]})
+        if tags[mouse.screen][new_tag] then
+          awful.tag.viewonly(tags[mouse.screen][new_tag])
+        end
+      end)
 )
 
 -- Compute the maximum number of digit we need, limited to 9
@@ -399,6 +459,7 @@ end)
 client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
+--awful.hooks.timer.register(10, function () volume("update", tb_volume) end)
 --
 -- vim: fdm=marker
 
