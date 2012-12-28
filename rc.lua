@@ -9,8 +9,10 @@ require("naughty")
 
 -- Load Debian menu entries
 require("debian.menu")
-
+-- Load volume control module
 require("volume")
+-- Load some common function written by me
+require("common")
 
 
 -- {{{ Error handling
@@ -133,106 +135,94 @@ mytaglist = {}
 mytimer = {}
 timer_label = {}
 mytaglist.buttons = awful.util.table.join(
-                    awful.button({ }, 1, awful.tag.viewonly),
-                    awful.button({ modkey }, 1, awful.client.movetotag),
-                    awful.button({ }, 3, awful.tag.viewtoggle),
-                    awful.button({ modkey }, 3, awful.client.toggletag),
-                    awful.button({ }, 4, awful.tag.viewnext),
-                    awful.button({ }, 5, awful.tag.viewprev)
-                    )
+  awful.button({ }, 1, awful.tag.viewonly),
+  awful.button({ modkey }, 1, awful.client.movetotag),
+  awful.button({ }, 3, awful.tag.viewtoggle),
+  awful.button({ modkey }, 3, awful.client.toggletag),
+  awful.button({ }, 4, awful.tag.viewnext),
+  awful.button({ }, 5, awful.tag.viewprev)
+)
 mytasklist = {}
 mytasklist.buttons = awful.util.table.join(
-                     awful.button({ }, 1, function (c)
-                                              if c == client.focus then
-                                                  c.minimized = true
-                                              else
-                                                  if not c:isvisible() then
-                                                      awful.tag.viewonly(c:tags()[1])
-                                                  end
-                                                  -- This will also un-minimize
-                                                  -- the client, if needed
-                                                  client.focus = c
-                                                  c:raise()
-                                              end
-                                          end),
-                     awful.button({ }, 3, function ()
-                                              if instance then
-                                                  instance:hide()
-                                                  instance = nil
-                                              else
-                                                  instance = awful.menu.clients({ width=250 })
-                                              end
-                                          end),
-                     awful.button({ }, 4, function ()
-                                              awful.client.focus.byidx(1)
-                                              if client.focus then client.focus:raise() end
-                                          end),
-                     awful.button({ }, 5, function ()
-                                              awful.client.focus.byidx(-1)
-                                              if client.focus then client.focus:raise() end
-                                          end))
+  awful.button({ }, 1, function (c)
+    if c == client.focus then
+      c.minimized = true
+    else
+      if not c:isvisible() then
+        awful.tag.viewonly(c:tags()[1])
+      end
+      -- This will also un-minimize
+      -- the client, if needed
+      client.focus = c
+      c:raise()
+    end
+  end)
+)
+
+-- {{{ Volume control widget with a timer
 tb_volume = widget({ type = "textbox", name = "tb_volume", align = "right"})
 tb_volume:buttons(awful.util.table.join(
-     awful.button({ }, 1, function () volume.volume_toggle(tb_volume) end),
-     awful.button({ }, 3, function () awful.util.spawn_with_shell('gnome-control-center sound') end),
-     awful.button({ "Control" }, 1, function () volume.volume_up(tb_volume) end),
-     awful.button({ "Control" }, 3, function () volume.volume_down(tb_volume) end)
+   awful.button({ }, 1, function () volume.volume_toggle(tb_volume) end),
+   awful.button({ }, 3, 
+    function () 
+      awful.util.spawn_with_shell('gnome-control-center sound') 
+    end),
+   awful.button({ "Control" }, 1, function () volume.volume_up(tb_volume) end),
+   awful.button({ "Control" }, 3, function () volume.volume_down(tb_volume) end)
      ))
-
+tb_volume.text = volume.get_volume_status()
 volume_timer = timer({timeout=60})
 volume_timer:add_signal("timeout", function() tb_volume.text = volume.get_volume_status() end)
 volume_timer:start()
+-- }}}
+
+-- {{{ Widget for displaying CPU/Memory/Download Speed/Upload Speed
+tb_monitor = widget({type="textbox"})
+tb_monitor.text = "loading..."
+timer_monitor = timer({timeout=1})
+timer_monitor:add_signal("timeout", function()
+  tb_monitor.text = "<span font='monospace' color='#00AAAA'>" 
+    .. common.read_command_output("/home/newk/scripts/sysmon")
+    .. "</span>"
+end)
+timer_monitor:start()
+-- }}}
 
 for s = 1, screen.count() do
-    -- Create a promptbox for each screen
-    mypromptbox[s] = awful.widget.prompt({ layout = awful.widget.layout.horizontal.leftright })
-    -- Create an imagebox widget which will contains an icon indicating which layout we're using.
-    -- We need one layoutbox per screen.
-    mylayoutbox[s] = awful.widget.layoutbox(s)
-    mylayoutbox[s]:buttons(awful.util.table.join(
-                           awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
-                           awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end),
-                           awful.button({ }, 4, function () awful.layout.inc(layouts, 1) end),
-                           awful.button({ }, 5, function () awful.layout.inc(layouts, -1) end)))
-    -- Create a taglist widget
-    mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.label.all, mytaglist.buttons)
+  -- Create a promptbox for each screen
+  mypromptbox[s] = awful.widget.prompt({ layout = awful.widget.layout.horizontal.leftright })
+  -- Create an imagebox widget which will contains an icon indicating which layout we're using.
+  -- We need one layoutbox per screen.
+  mylayoutbox[s] = awful.widget.layoutbox(s)
+  mylayoutbox[s]:buttons(awful.util.table.join(
+    awful.button({ }, 1, function () awful.layout.inc(layouts, 1) end),
+    awful.button({ }, 3, function () awful.layout.inc(layouts, -1) end)))
+  -- Create a taglist widget
+  mytaglist[s] = awful.widget.taglist(s, awful.widget.taglist.label.all, mytaglist.buttons)
 
-    -- Create a tasklist widget
-    mytasklist[s] = awful.widget.tasklist(function(c)
-                                              return awful.widget.tasklist.label.currenttags(c, s)
-                                          end, mytasklist.buttons)
+  -- Create a tasklist widget
+  mytasklist[s] = awful.widget.tasklist(function(c)
+    return awful.widget.tasklist.label.currenttags(c, s)
+  end, mytasklist.buttons)
 
-    -- Create a textbox to test timer
---    timer_label[s] = widget({type = "textbox"})
-    -- Create a timer widget
---    mytimer[s] = timer({ timeout = 1 })
---    mytimer[s]:add_signal("timeout", 
---      function() 
---        awful.util.spawn_with_shell("date > /tmp/awesome")
---        local fh = io.input("/tmp/awesome")
---        local data = fh:read("*all")
---        io.close(fh)
---        timer_label[s].text = '<span color="green">' .. data .. "</span>"
---      end)
---    mytimer[s]:start()
-    -- Create the wibox
-    mywibox[s] = awful.wibox({ position = "top", screen = s })
-    -- Add widgets to the wibox - order matters
-    mywibox[s].widgets = {
-        {
-            mylauncher,
-            mytaglist[s],
-            mypromptbox[s],
-            layout = awful.widget.layout.horizontal.leftright
-        },
-        mylayoutbox[s],
-        tb_volume,
-        mytextclock,
-        s == 1 and mysystray or nil,
---        timer_label[s],
-        mytasklist[s],
-        layout = awful.widget.layout.horizontal.rightleft
-    }
+  -- Create the wibox
+  mywibox[s] = awful.wibox({ position = "top", screen = s })
+  -- Add widgets to the wibox - order matters
+  mywibox[s].widgets = {
+    {
+      mylauncher,
+      mytaglist[s],
+      mypromptbox[s],
+      layout = awful.widget.layout.horizontal.leftright
+    },
+    mylayoutbox[s],
+    tb_volume,
+    mytextclock,
+    tb_monitor,
+    s == 1 and mysystray or nil,
+    mytasklist[s],
+    layout = awful.widget.layout.horizontal.rightleft
+  }
 end
 -- }}}
 
@@ -364,33 +354,33 @@ end
 -- Be careful: we use keycodes to make it works on any keyboard layout.
 -- This should map on the top row of your keyboard, usually 1 to 9.
 for i = 1, keynumber do
-    globalkeys = awful.util.table.join(globalkeys,
-        awful.key({ modkey }, "#" .. i + 9,
-                  function ()
-                        local screen = mouse.screen
-                        if tags[screen][i] then
-                            awful.tag.viewonly(tags[screen][i])
-                        end
-                  end),
-        awful.key({ modkey, "Control" }, "#" .. i + 9,
-                  function ()
-                      local screen = mouse.screen
-                      if tags[screen][i] then
-                          awful.tag.viewtoggle(tags[screen][i])
-                      end
-                  end),
-        awful.key({ modkey, "Shift" }, "#" .. i + 9,
-                  function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.movetotag(tags[client.focus.screen][i])
-                      end
-                  end),
-        awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
-                  function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.toggletag(tags[client.focus.screen][i])
-                      end
-                  end))
+  globalkeys = awful.util.table.join(globalkeys,
+  awful.key({ modkey }, "#" .. i + 9,
+    function ()
+      local screen = mouse.screen
+      if tags[screen][i] then
+        awful.tag.viewonly(tags[screen][i])
+      end
+    end),
+  awful.key({ modkey, "Control" }, "#" .. i + 9,
+    function ()
+      local screen = mouse.screen
+      if tags[screen][i] then
+        awful.tag.viewtoggle(tags[screen][i])
+      end
+    end),
+  awful.key({ modkey, "Shift" }, "#" .. i + 9,
+    function ()
+      if client.focus and tags[client.focus.screen][i] then
+        awful.client.movetotag(tags[client.focus.screen][i])
+      end
+    end),
+  awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
+    function ()
+      if client.focus and tags[client.focus.screen][i] then
+        awful.client.toggletag(tags[client.focus.screen][i])
+      end
+    end))
 end
 
 clientbuttons = awful.util.table.join(
@@ -459,7 +449,6 @@ end)
 client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
 -- }}}
---awful.hooks.timer.register(10, function () volume("update", tb_volume) end)
---
+
 -- vim: fdm=marker
 
