@@ -1,4 +1,5 @@
 -- Standard awesome library
+-- Library source: /usr/share/awesome/lib/
 require("awful")
 require("awful.autofocus")
 require("awful.rules")
@@ -14,6 +15,41 @@ require("volume")
 -- Load some common function written by me
 require("common")
 
+vicious = require("vicious")
+
+-- {{{ autostart
+awful.util.spawn_with_shell("pgrep -f goagent || /home/newk/goagent/run")
+-- }}}
+
+-- {{{
+background_timers = {}
+function run_background(cmd,funtocall)
+  local r = io.popen("mktemp")
+  local logfile = r:read("*line")
+  r:close()
+
+  cmdstr = cmd .. " > " .. logfile .. " & "
+  local cmdf = io.popen(cmdstr)
+  cmdf:close()
+  background_timers[cmd] = {
+    file  = logfile,
+    timer = timer{timeout=1}
+  }
+  background_timers[cmd].timer:add_signal("timeout",function()
+    local cmdf = io.popen("pgrep -f '" .. cmd .. "'")
+    local s = cmdf:read("*all")
+    cmdf:close()
+    if (s=="") then
+      background_timers[cmd].timer:stop()
+      local lf = io.open(background_timers[cmd].file)
+      funtocall(lf:read("*all"))
+      lf:close()
+      io.popen("rm " .. background_timers[cmd].file)
+    end
+  end)
+  background_timers[cmd].timer:start()
+end
+-- }}}
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -42,7 +78,7 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
-beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+beautiful.init(awful.util.getdir("config") .. "/themes/default/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "x-terminal-emulator"
@@ -72,6 +108,8 @@ layouts =
 --    awful.layout.suit.max.fullscreen,
     awful.layout.suit.magnifier
 }
+-- path where the config files located
+config_path = awful.util.getdir("config") .. "/"
 -- }}}
 
 -- {{{ Tags
@@ -87,37 +125,12 @@ end
 -- }}}
 
 -- {{{ Menu
--- Create a laucher widget and a main menu
-myawesomemenu = {
-   { "manual", terminal .. " -e man awesome" },
-   { "edit config", editor_cmd .. " " .. awesome.conffile },
-   { "restart", awesome.restart },
-   { "quit", awesome.quit }
-}
 
-virtualboxmenu = {
-  { "XP For Web", "virtualbox --startvm test" },
-  { "XP For Work", "virtualbox --startvm WinXPForWork" },
-  { "XP For Money", "virtualbox --startvm WinXPForMoney" },
-  { "Manager", "virtualbox" }
-}
-
-controlcentermenu = {
-  { "Control Center", "gnome-control-center" },
-  { "Network", "gnome-control-center network" },
-}
-
-mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
-                                    { "Debian", debian.menu.Debian_menu.Debian },
-                                    { "open terminal", terminal },
-                                    { "VirtualBox", virtualboxmenu },
-                                    { "Control Center", controlcentermenu },
-                                    { "Home Folder", "nautilus ."}
-                                  }
-                        })
-
-mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
-                                     menu = mymainmenu })
+-- load menu from another file
+mymainmenu = dofile(config_path .. "menu.lua")
+mylauncher = awful.widget.launcher(
+  { image = image(beautiful.awesome_icon),
+  menu = mymainmenu })
 -- }}}
 
 -- {{{ Wibox
@@ -177,15 +190,24 @@ volume_timer:start()
 -- }}}
 
 -- {{{ Widget for displaying CPU/Memory/Download Speed/Upload Speed
-tb_monitor = widget({type="textbox"})
-tb_monitor.text = "loading..."
-timer_monitor = timer({timeout=1})
-timer_monitor:add_signal("timeout", function()
-  tb_monitor.text = "<span font='monospace' color='#00AAAA'>" 
-    .. common.read_command_output("/home/newk/scripts/sysmon")
-    .. "</span>"
-end)
-timer_monitor:start()
+--tb_monitor = widget({type="textbox"})
+--tb_monitor.text = "loading..."
+--function update_tb_monitor(data)
+--  tb_monitor.text = "<span font='monospace' color='#00AAAA'>" 
+--    .. data .. "</span>"
+--end
+--timer_monitor = timer({timeout=3})
+--timer_monitor:add_signal("timeout", function()
+--  run_background("dstat --net --mem --cpu 1 1")
+--end)
+--timer_monitor:start()
+-- }}}
+
+-- {{{
+memwidget = widget({ type = "textbox" })
+vicious.register(memwidget, vicious.widgets.mem, " $1%", 13)
+netwidget = widget({ type = "textbox" })
+vicious.register(netwidget, vicious.widgets.net, "${eth0 up_kb} ${eth0 down_kb}", 2)
 -- }}}
 
 for s = 1, screen.count() do
@@ -218,7 +240,9 @@ for s = 1, screen.count() do
     mylayoutbox[s],
     tb_volume,
     mytextclock,
-    tb_monitor,
+--    tb_monitor,
+    memwidget,
+    netwidget,
     s == 1 and mysystray or nil,
     mytasklist[s],
     layout = awful.widget.layout.horizontal.rightleft
@@ -409,8 +433,8 @@ awful.rules.rules = {
       properties = { floating = true } },
     { rule = { class = "Google-chrome" },
       properties = { tag = tags[1][2] } },
-    { rule = { class = "Gnome-terminal" },
-      properties = { tag = tags[1][1] } },
+--    { rule = { class = "Gnome-terminal" },
+--      properties = { tag = tags[1][1] } },
     { rule = { class = "VirtualBox" },
       properties = { tag = tags[1][5] } },
     -- Set Firefox to always map on tags number 2 of screen 1.
