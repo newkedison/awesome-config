@@ -40,6 +40,7 @@ system_command = {
   -- but I make it don't need to input password, 
   -- see /etc/sudoers.d/reboot_logout for more detail,
   -- and also see the README file in the same folder for some hint
+  -- This method is read from:http://crunchbang.org/forums/viewtopic.php?pid=149596#p149596
   { "Restart", "sudo reboot" },
   { "Shutdown", "sudo poweroff" },
 }
