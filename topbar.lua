@@ -72,12 +72,16 @@ function build_wibox(launcher, promptboxes)
   vicious.register(tb_network, vicious.widgets.net, show_network, 2)
   -- }}}
 
-  -- Create weather widget {{{
-  tb_weather = widget({ type = "textbox" })
-  -- Location code can be find in:
-  -- http://weather.rap.ucar.edu/surface/stations.txt
-  vicious.register(tb_weather, vicious.widgets.weather,
-    "<span color='#1188CC'>${tempc}°C</span>", 61, "ZSSS")
+  -- Create battery widget {{{
+  pb_battery = awful.widget.progressbar()
+  pb_battery:set_width(8)
+  pb_battery:set_height(10)
+  pb_battery:set_vertical(true)
+  pb_battery:set_background_color("#494B4F")
+  pb_battery:set_border_color(nil)
+  pb_battery:set_color("#AECF96")
+  pb_battery:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
+  vicious.register(pb_battery, vicious.widgets.bat, "$2", 61, "BAT0")
   -- }}}
 
   -- Create button behavior {{{
@@ -145,7 +149,6 @@ function build_wibox(launcher, promptboxes)
       tb_split,
       tb_network,
       tb_split,
-      tb_weather,
       tb_split,
       s == 1 and systray or nil,
       tb_split,

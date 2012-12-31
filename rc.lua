@@ -110,7 +110,15 @@ for s = 1, screen.count() do
   promptboxes[s] = awful.widget.prompt(
     { layout = awful.widget.layout.horizontal.leftright })
 end
-mywibox = topbar.build_wibox(mylauncher, promptboxes)
+wb_top = topbar.build_wibox(mylauncher, promptboxes)
+--Test for multiple wiboxes
+--wb_left = awful.wibox({ position = "left", screen = 1 })
+--tb_test = widget({type="textbox"})
+--tb_test.text = "test"
+--wb_left.widgets = {
+--  tb_test,
+--  layout = awful.widget.layout.horizontal.rightleft
+--}
 -- }}}
 
 -- {{{ Mouse bindings
