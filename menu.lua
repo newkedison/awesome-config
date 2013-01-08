@@ -1,19 +1,19 @@
 -- Create a laucher widget and a main menu
-awesome_control = {
+local awesome_control = {
   { "manual", terminal .. " -e man awesome" },
   { "edit config", editor_cmd .. " " .. awesome.conffile },
   { "restart", awesome.restart },
   { "quit", awesome.quit }
 }
 
-virtualbox = {
+local virtualbox = {
   { "XP For Web", "virtualbox --startvm test" },
   { "XP For Work", "virtualbox --startvm WinXPForWork" },
   { "XP For Money", "virtualbox --startvm WinXPForMoney" },
   { "Manager", "virtualbox" }
 }
 
-control_center = {
+local control_center = {
   { "Control Center", "gnome-control-center" },
   { "Network", "gnome-control-center network" },
   { "Connections", "nm-connection-editor" },
@@ -21,7 +21,7 @@ control_center = {
   { "Sound", "gnome-control-center sound" },
 }
 
-favorite_applications = {
+local favorite_applications = {
   { "Amarok", "amarok"},
   { "Chrome", "google-chrome"},
   { "Shutter", "shutter" },
@@ -29,13 +29,13 @@ favorite_applications = {
   { "Terminal", terminal },
 }
 
-folders = {
+local folders = {
   { "Home", "pcmanfm ." },
   { "Download", "pcmanfm Downloads" },
   { "Picture", "pcmanfm Pictures" },
 }
 
-system_command = {
+local system_command = {
   { "Awesome Memu", awesome_control, beautiful.awesome_icon },
   { "Control Center", control_center },
   { "Logout", awesome.quit },
@@ -48,7 +48,7 @@ system_command = {
   { "Shutdown", "sudo poweroff" },
 }
 
-main = awful.menu({ 
+local main = awful.menu({ 
   items = { 
     { "Favorite", favorite_applications },
     { "Debian", debian.menu.Debian_menu.Debian },
