@@ -78,7 +78,7 @@ theme.titlebar_maximized_button_normal_active = dir .. "titlebar/maximized_norma
 theme.titlebar_maximized_button_focus_active  = dir .. "titlebar/maximized_focus_active.png"
 
 -- You can use your own command to set your wallpaper
-theme.wallpaper_cmd = { "awsetbg /home/newk/Pictures/background.jpg" }
+theme.wallpaper_cmd = { "awsetbg " .. dir .. "background.jpg" }
 
 -- You can use your own layout icons like this:
 theme.layout_fairh = dir .. "layouts/fairhw.png"
