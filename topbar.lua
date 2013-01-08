@@ -41,12 +41,12 @@ function build_wibox(launcher, promptboxes)
     awful.button({ "Control" }, 3, function () volume.volume_down(tb_volume) end)
   ))
   tb_volume.text = volume.get_volume_status()
-  volume_timer = timer({timeout=60})
-  volume_timer:add_signal("timeout", 
+  timer_volume = timer({timeout=60})
+  timer_volume:add_signal("timeout", 
     function()
       tb_volume.text = volume.get_volume_status()
     end)
-  volume_timer:start()
+  timer_volume:start()
   -- }}}
 
   -- Create widgets to show memory/CPU/network statistic {{{
@@ -55,7 +55,11 @@ function build_wibox(launcher, promptboxes)
     "<span color='cyan'>M:$1</span>", 3)
   tb_cpu = widget({ type = "textbox" })
   vicious.register(tb_cpu, vicious.widgets.cpu,
-    "<span color='#11CC22'>C:$1</span>", 5)
+    function (widget, args)
+      return "<span color='#11CC22'>C:"
+        .. string.format("%2.0f", args[1])
+        .. "</span>"
+    end , 5)
   tb_network = widget({ type = "textbox" })
   function show_network(widget, args)
     if args["{eth0 carrier}"] == 1 then
@@ -64,24 +68,72 @@ function build_wibox(launcher, promptboxes)
       carrier = "wlan0"
     end
     return "<span color='#66CC00'>U:" 
-      .. string.format("% 3.0f", args["{" .. carrier .. " up_kb}"])
+      .. string.format("%3.0f", args["{" .. carrier .. " up_kb}"])
       .. "</span> <span color='#CC6600'>D:"
-      .. string.format("% 3.0f", args["{" .. carrier .. " down_kb}"])
+      .. string.format("%3.0f", args["{" .. carrier .. " down_kb}"])
       .. "</span>"
   end
   vicious.register(tb_network, vicious.widgets.net, show_network, 2)
   -- }}}
 
   -- Create battery widget {{{
-  pb_battery = awful.widget.progressbar()
-  pb_battery:set_width(8)
-  pb_battery:set_height(10)
-  pb_battery:set_vertical(true)
-  pb_battery:set_background_color("#494B4F")
-  pb_battery:set_border_color(nil)
-  pb_battery:set_color("#AECF96")
-  pb_battery:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
-  vicious.register(pb_battery, vicious.widgets.bat, "$2", 61, "BAT0")
+  tb_battery = widget({type = "textbox"})
+  timer_battery = timer({timeout=61})
+  function battery_info() -- Read all buttery info {{{
+    local battery_ID = "BAT0"
+    local path = "/sys/class/power_supply/" .. battery_ID .. "/uevent"
+    local f = io.open(path)
+    local power = {}
+    for line in f:lines() do
+      s, e = string.find(line, "=")
+      if s then
+        power[string.sub(line, 14, s - 1)]
+          = string.sub(line, e + 1, string.len(line))
+      end
+    end
+    io.close(f)
+    local status = power["STATUS"]
+    if status == nil or status == "Unknown" then
+      return "Unknown"
+    end
+    if status == "Full" or status == "Charged" then
+      return "<span color='green'>Full</span>"
+    end
+    local capacity = power['CHARGE_FULL']
+    local now = power['CHARGE_NOW']
+    if not capacity then
+      if power['ENERGY_NOW'] then
+        capacity = power['ENERGY_FULL']
+        now = power['ENERGY_NOW']
+      else
+        return "<span color='red'>" .. status .. "(?)</span>"
+      end
+    end
+    local percent = math.min(math.floor(now / capacity * 100), 100)
+    local rate = power['CURRENT_NOW']
+    if not rate then
+      return "<span color='red'>" .. status .. "(" .. percent .. "%)</span>"
+    end
+    local timeleft = 0
+    if status == "Discharging" then
+      timeleft = now / rate
+    elseif status == "Charging" then
+      timeleft = (full - now) / rate
+    else
+      return "<span color='red'>" .. status .. "(" .. percent .. "%)</span>"
+    end
+    local hoursleft = math.floor(timeleft)
+    local minutesleft = math.floor((timeleft - hoursleft) * 60)
+    local time = string.format("%02d:%02d", hoursleft, minutesleft)
+    return "<span color='cyan'>" .. status
+      .. "(" .. percent .. "% " .. time .. ")</span>"
+  end --}}}
+  timer_battery:add_signal("timeout", 
+    function()
+      tb_battery.text = battery_info()
+    end)
+  timer_battery:start()
+  tb_battery.text = battery_info()
   -- }}}
 
   -- Create button behavior {{{
@@ -149,6 +201,7 @@ function build_wibox(launcher, promptboxes)
       tb_split,
       tb_network,
       tb_split,
+      tb_battery,
       tb_split,
       s == 1 and systray or nil,
       tb_split,

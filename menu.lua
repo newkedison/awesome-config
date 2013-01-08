@@ -16,6 +16,8 @@ virtualbox = {
 control_center = {
   { "Control Center", "gnome-control-center" },
   { "Network", "gnome-control-center network" },
+  { "Connections", "nm-connection-editor" },
+  { "Monitor", "gnome-system-monitor" },
   { "Sound", "gnome-control-center sound" },
 }
 
@@ -28,13 +30,14 @@ favorite_applications = {
 }
 
 folders = {
-  { "Home", "nautilus ." },
-  { "Download", "nautilus Downloads" },
-  { "Picture", "nautilus Pictures" },
+  { "Home", "pcmanfm ." },
+  { "Download", "pcmanfm Downloads" },
+  { "Picture", "pcmanfm Pictures" },
 }
 
 system_command = {
   { "Awesome Memu", awesome_control, beautiful.awesome_icon },
+  { "Control Center", control_center },
   { "Logout", awesome.quit },
   -- Note: the two command bellow need to be run with sudo
   -- but I make it don't need to input password, 
@@ -50,7 +53,6 @@ main = awful.menu({
     { "Favorite", favorite_applications },
     { "Debian", debian.menu.Debian_menu.Debian },
     { "VirtualBox", virtualbox },
-    { "Control Center", control_center },
     { "Folders", folders},
     { "System", system_command },
   }

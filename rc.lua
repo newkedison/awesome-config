@@ -18,10 +18,6 @@ require("common")
 vicious = require("vicious")
 require("topbar")
 
--- {{{ autostart
-awful.util.spawn_with_shell("pgrep -f goagent || /home/newk/goagent/run")
--- }}}
-
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -83,11 +79,25 @@ layouts =
 config_path = awful.util.getdir("config") .. "/"
 -- }}}
 
+-- util function {{{
+function show_debug_info(str, timeout)
+  naughty.notify({
+    present = naughty.config.presets.normal,
+    title = "<span color='#888'>Debug Info</span>",
+    text = str,
+    timeout = timeout or 20,
+    ontop = true,
+    bg = "#222222",
+    fg = "green",
+  })
+end
+-- }}}
+
 -- {{{ Tags
 -- Define a tag table which hold all screen tags.
 tags = {
-  names  = { '1 Term', '2 Web', '3 Work', '4 VIM', '5 VBox', '6 Misc.' },
-  layouts = { layouts[2], layouts[3], layouts[1], layouts[3], layouts[3], layouts[1] }
+  names  = { '1 Term', '2 Web', '3 VIM', '4 VBox', '5 Misc' },
+  layouts = { layouts[2], layouts[3], layouts[3], layouts[3], layouts[1] }
 }
 for s = 1, screen.count() do
   -- Each screen has its own tag table.
@@ -215,7 +225,7 @@ clientkeys = awful.util.table.join(
         local curidx = awful.tag.getidx(c:tags()[1])
         local new_tag = 1
         if curidx == 1 then
-          new_tag = 6
+          new_tag = 5
         else
           new_tag = curidx - 1
         end
@@ -228,7 +238,7 @@ clientkeys = awful.util.table.join(
       function (c)
         local curidx = awful.tag.getidx(c:tags()[1])
         local new_tag = 1
-        if curidx == 6 then
+        if curidx == 5 then
           new_tag = 1
         else
           new_tag = curidx + 1
@@ -313,7 +323,7 @@ awful.rules.rules = {
 --    { rule = { class = "Gnome-terminal" },
 --      properties = { tag = tags[1][1] } },
     { rule = { class = "VirtualBox" },
-      properties = { tag = tags[1][5] } },
+      properties = { tag = tags[1][4] } },
     -- Set Firefox to always map on tags number 2 of screen 1.
     -- { rule = { class = "Firefox" },
     --   properties = { tag = tags[1][2] } },
@@ -349,6 +359,35 @@ end)
 
 client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+-- }}}
+
+-- {{{ autostart
+-- Autostart
+-- From: http://awesome.naquadah.org/wiki/Autostart#Directory_way
+function autostart(dir)
+  if not dir then
+    do return nil end
+  end
+  local fd = io.popen("ls -1 -F " .. dir)
+  if not fd then
+    do return nil end
+  end
+  for file in fd:lines() do
+    local c= string.sub(file,-1)   -- last char
+    if c=='*' then  -- executables
+      executable = dir .. "/" .. string.sub( file, 1, -2 ) .. ""
+--      show_debug_info("Executing: " .. executable, 10)
+      awful.util.spawn_with_shell(executable) -- launch in bg
+--    elseif c=='@' then  -- symbolic links
+--      print("Awesome Autostart: Not handling symbolic links: " .. file)
+--    else
+--      print ("Awesome Autostart: Skipping file " .. file .. " not executable.")
+    end
+  end
+  io.close(fd)
+end
+autostart_dir = os.getenv("HOME") .. "/.config/awesome/autostart"
+autostart(autostart_dir)
 -- }}}
 
 -- vim: fdm=marker
