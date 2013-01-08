@@ -15,7 +15,6 @@ require("volume")
 -- Load some common function written by me
 require("common")
 
-vicious = require("vicious")
 require("topbar")
 
 -- {{{ Error handling
