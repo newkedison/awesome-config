@@ -86,12 +86,13 @@ function build_wibox(launcher, promptboxes)
   end --}}}
   -- Calculate all transfer bytes of all network adapter
   function get_network_sum() --{{{
+    -- use `sed` to ignore the "lo" adapter
     -- use `awk` two times to get exactly the value
     -- every network adapter print two line,
     -- first line is the total bytes received
     -- second line is the total bytes sent
-    local cmd = "ifconfig | grep 'bytes' | awk -F':' '{print $2,$3}' "
-      .. "| awk '{print $1; print $6}'"
+    local cmd = "ifconfig | sed -e '/lo/,/bytes/d'  | grep 'bytes' "
+      .. "| awk -F':' '{print $2,$3}' | awk '{print $1; print $6}'"
     local f = io.popen(cmd)
     local values = {}
     -- Save all value in a table first
