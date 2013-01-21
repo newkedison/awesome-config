@@ -24,6 +24,7 @@ local control_center = {
 local favorite_applications = {
   { "Amarok", "amarok"},
   { "Chrome", "google-chrome"},
+  { "Samba", "sudo system-config-samba" },
   { "Shutter", "shutter" },
   { "Stardict", "stardict"},
   { "Terminal", terminal },
@@ -41,7 +42,7 @@ local system_command = {
   { "Logout", awesome.quit },
   -- Note: the two command bellow need to be run with sudo
   -- but I make it don't need to input password, 
-  -- see /etc/sudoers.d/reboot_logout for more detail,
+  -- see /etc/sudoers.d/nopassword for more detail,
   -- and also see the README file in the same folder for some hint
   -- This method is read from:http://crunchbang.org/forums/viewtopic.php?pid=149596#p149596
   { "Restart", "sudo reboot" },
