@@ -134,11 +134,21 @@ function build_wibox(launcher, promptboxes)
   -- Format all the value
   function get_network_cpu_memory_status() -- {{{
     local up, down = get_network_status()
+    if up >= 1000 then
+      str_up = string.format("%3.1f", up / 1024)
+    else
+      str_up = string.format("%3.0f", up)
+    end
+    if down >= 1000 then
+      str_down = string.format("%3.1f", down / 1024)
+    else
+      str_down = string.format("%3.0f", down)
+    end
     local cpu = get_cpu_status()
     local mem = get_memory_status()
-    return "<span color='#66CC00'>U:" .. string.format("%3.0f", up) 
-    .. " </span><span color='#CC6600'>D:" .. string.format("%3.0f", down) 
-    .. " </span><span color='#11CC22'>C:" .. string.format("%2.0f", cpu)
+    return "<span color='#66CC00'>U:" .. str_up
+    .. " </span><span color='#11CC22'>D:" .. str_down
+    .. " </span><span color='#CC6600'>C:" .. string.format("%2.0f", cpu)
     .. " </span><span color='cyan'>M:" .. string.format("%2.0f", mem)
     .. "</span>"
   end --}}}

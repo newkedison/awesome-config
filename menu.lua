@@ -23,6 +23,7 @@ local control_center = {
 
 local favorite_applications = {
   { "Amarok", "amarok"},
+  { "Calculator", "gcalctool"},
   { "Chrome", "google-chrome"},
   { "Samba", "sudo system-config-samba" },
   { "Shutter", "shutter" },
