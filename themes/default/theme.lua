@@ -10,9 +10,9 @@ dir = awful.util.getdir("config") .. "/themes/default/"
 theme.font          = "Ubuntu Mono 11"
 
 theme.bg_normal     = "#000000"
-theme.bg_focus      = "#535d6c"
+theme.bg_focus      = "#0054E3"
 theme.bg_urgent     = "#ff0000"
-theme.bg_minimize   = "#444444"
+theme.bg_minimize   = "#7DA9CB"
 
 theme.fg_normal     = "#eeeeee"
 theme.fg_focus      = "#ffffff"
@@ -21,7 +21,7 @@ theme.fg_minimize   = "#ffffff"
 
 theme.border_width  = "1"
 theme.border_normal = "#000000"
-theme.border_focus  = "#535d6c"
+theme.border_focus  = "#9DB9EB"
 theme.border_marked = "#91231c"
 
 -- There are other variable sets

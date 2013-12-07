@@ -202,6 +202,7 @@ globalkeys = awful.util.table.join(
 clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
+    awful.key({ modkey,           }, "c",      function (c) c:kill()                         end),
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
@@ -367,14 +368,14 @@ function autostart(dir)
   if not dir then
     do return nil end
   end
-  local fd = io.popen("ls -1 -F " .. dir)
+  local fd = io.popen("ls -1 -F " .. dir .. "/S??*")
   if not fd then
     do return nil end
   end
   for file in fd:lines() do
     local c= string.sub(file,-1)   -- last char
     if c=='*' then  -- executables
-      executable = dir .. "/" .. string.sub( file, 1, -2 ) .. ""
+      executable = string.sub( file, 1, -2 ) .. ""
 --      show_debug_info("Executing: " .. executable, 10)
       awful.util.spawn_with_shell(executable) -- launch in bg
 --    elseif c=='@' then  -- symbolic links
