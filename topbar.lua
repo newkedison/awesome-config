@@ -9,10 +9,14 @@ function build_wibox(launcher, promptboxes)
   -- Create a datetime widget {{{
   datetime = awful.widget.textclock({ align = "right"}, "%m-%d %H:%M:%S ", 1)
   function show_datetime()
+    s_date = common.read_command_output('date')
+    s_calendar = common.read_command_output(
+      "cal | sed 's/\\(_\\x08 _\\x08\\)\\([0-9]\\)/"
+      .. " <span color=\"#F00\">\\2<\\/span>/'")
     naughty.notify({
       present = naughty.config.presets.normal,
       title = "<span color='#888'>Current Datetime</span><br />",
-      text = common.read_command_output('date'),
+      text = s_date .. "\n" .. s_calendar,
       timeout = 20,
       ontop = true,
       bg = "#222222",
