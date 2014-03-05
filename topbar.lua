@@ -11,13 +11,13 @@ function build_wibox(launcher, promptboxes)
   function show_datetime()
     s_date = common.read_command_output('date')
     s_calendar = common.read_command_output(
-      "cal | sed 's/\\(_\\x08 _\\x08\\)\\([0-9]\\)/"
+      "LC_TIME=en_US.UTF-8 cal -3 | sed 's/\\(_\\x08 _\\x08\\)\\([0-9]\\)/"
       .. " <span color=\"#F00\">\\2<\\/span>/'")
     naughty.notify({
       present = naughty.config.presets.normal,
       title = "<span color='#888'>Current Datetime</span><br />",
       text = s_date .. "\n" .. s_calendar,
-      timeout = 20,
+      timeout = 60,
       ontop = true,
       bg = "#222222",
       fg = "green",
