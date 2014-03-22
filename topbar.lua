@@ -11,8 +11,10 @@ function build_wibox(launcher, promptboxes)
   function show_datetime()
     s_date = common.read_command_output('date')
     s_calendar = common.read_command_output(
-      "LC_TIME=en_US.UTF-8 cal -3 | sed 's/\\(_\\x08 _\\x08\\)\\([0-9]\\)/"
-      .. " <span color=\"#F00\">\\2<\\/span>/'")
+      "LC_TIME=en_US.UTF-8 cal -3 | sed -e 's/\\(_\\x08 _\\x08\\)\\([0-9]\\)/"
+      .. " <span color=\"#F00\">\\2<\\/span>/'"
+      .. " -e 's/_\\x08\\([0-9]\\)_\\x08\\([0-9]\\)/"
+      .. "<span color=\"#F00\">\\1\\2<\\/span>/'")
     naughty.notify({
       present = naughty.config.presets.normal,
       title = "<span color='#888'>Current Datetime</span><br />",
@@ -23,10 +25,42 @@ function build_wibox(launcher, promptboxes)
       fg = "green",
     })
   end
+  function show_lunar_calendar()
+    month = tonumber(common.read_command_output("date +%-m"))
+    pre_month = (month - 1 + 12) % 12
+    next_month = (month + 1) % 12
+    year = tonumber(common.read_command_output("date +%Y"))
+    pre_year = year
+    if month == 1 then
+      pre_year = pre_year - 1
+    end
+    next_year = year
+    if month == 12 then
+      pre_year = pre_year + 1
+    end
+    cmd_ccal = "ccal -g -u "
+    cmd_sed = " | sed -e 's/\\x1b\\[7m/<span color=\"#F00\">/'"
+      .. " -e 's/\\x1b\\[0m/<\\/span>/'"
+    s_pre = common.read_command_output(cmd_ccal .. pre_month .. " " .. pre_year)
+    s_current = common.read_command_output(
+      cmd_ccal .. month .. " " .. year .. cmd_sed)
+    s_next = common.read_command_output(
+      cmd_ccal .. next_month .. " " .. next_year)
+    naughty.notify({
+      present = naughty.config.presets.normal,
+      title = "<span color='#888'>Lunar Calendar</span><br />",
+      text = s_pre .. "<br />" .. s_current .. "<br />" .. s_next,
+--      text = pre_month .. pre_year .. month .. year,
+      timeout = 60,
+      ontop = true,
+      bg = "#222222",
+      fg = "green",
+    })
+  end
   -- Click the widget to show current datetime
   datetime:buttons(awful.util.table.join(
     awful.button({ }, 1, show_datetime),
-    awful.button({ }, 3, show_datetime)
+    awful.button({ }, 3, show_lunar_calendar)
   )) -- }}}
 
   -- Create a systray {{{
